@@ -1,9 +1,7 @@
 import streamlit as st
-import numpy as np
 import string
 import re
 import math
-from matplotlib import pyplot as plt
 
 
 PF_day = 8.64e19
