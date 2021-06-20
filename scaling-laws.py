@@ -19,20 +19,7 @@ fmt = ScientificNotationFormatter()
 
 st.set_page_config(layout="wide")
 st.sidebar.markdown("## Variables")
-N = st.sidebar.number_input(
-    "Number of non-embedding params (millions):", 
-    min_value=-1., 
-    step=1.,
-    format='%f',
-    value=-1.,
-)
-D = st.sidebar.number_input(
-    "Dataset size in tokens (millions):", 
-    min_value=-1., 
-    step=1.,
-    format='%f',
-    value=-1.,
-)
+st.sidebar.markdown("Enter compute budget to find optimal param count and dataset size:")
 C_min = st.sidebar.number_input(
     "Compute budget (PF-days)",
     min_value=-1.,
@@ -40,6 +27,23 @@ C_min = st.sidebar.number_input(
     format='%e',
     value=-1.,
 )
+N = st.sidebar.number_input(
+    "Number of non-embedding params (millions):", 
+    min_value=-1., 
+    step=1.,
+    format='%f',
+    value=-1.,
+)
+N = N * 1e6 if N > 0 else N
+D = st.sidebar.number_input(
+    "Dataset size in tokens (millions):", 
+    min_value=-1., 
+    step=1.,
+    format='%f',
+    value=-1.,
+)
+D = D * 1e6 if D > 0 else D
+
 st.sidebar.markdown("## Power Laws for Compute Efficient Training")
 p_N = st.sidebar.number_input("Params (N)", value=0.73)
 p_B = st.sidebar.number_input("Batch size (B)", value=0.24)
@@ -50,7 +54,7 @@ N_e = st.sidebar.number_input("Params (N)", value=1.3e9, format='%e')
 B_e = st.sidebar.number_input("Batch size (B)", value=2.0e6, format='%e')
 S_e = st.sidebar.number_input("Steps (S)", value=5.4e3, format='%e')
 D_e = st.sidebar.number_input("Dataset size (D)", value=2.0e10, format='%e')
-st.sidebar.markdown("## Power Laws ($\alpha$)")
+st.sidebar.markdown("## Power Laws")
 a_N = st.sidebar.number_input("Params (N)", value=0.076)
 a_D = st.sidebar.number_input("Dataset size (D)", value=0.095)
 a_C_min = st.sidebar.number_input("Compute (C_min)", value=0.05)
@@ -65,13 +69,16 @@ col0, col1, col2 = st.beta_columns(3)
 col1.markdown("**Formula**")
 col2.markdown("**Result**")
 
+D_formatted = fmt.format("{:s}", D) if D > 0 else "D" 
+N_formatted = fmt.format("{:s}", N) if N > 0 else "N"
+
 # Compute optimal param count given fixed compute budget
 N_opt = N_e * C_min ** p_N
 N_opt_formatted = fmt.format("{:s}", N_opt) if C_min > 0 else "N_{opt}" 
 C_formatted = fmt.format("({:s})", C_min) if C_min > 0 else "C_{min}"
 
 col0.markdown("**Computed Value**")
-col0.markdown("Optimal parameter count (non-embedding)")
+col0.markdown("Optimal param count (non-embedding)")
 col1.markdown("$$N_{opt} = N_e \cdot C_{min}^{p_N}$$")
 col2.markdown("$$" + N_opt_formatted + fmt.format(" = {:s} \cdot ", N_e) + C_formatted + "^{" + f"{p_N:.02f}" + "}$$")
 
@@ -99,3 +106,20 @@ D_opt_formatted = fmt.format("{:s}", D_opt) if C_min > 0 else "D_{opt}"
 col0.markdown("Optimal dataset size (tokens)")
 col1.markdown("$$D_{opt} = D_e \cdot C_{min}^{p_D}$$")
 col2.markdown("$$" + D_opt_formatted + fmt.format(" = {:s} \cdot ", D_e) + C_formatted + "^{" + f"{p_D:.02f}" + "}$$")
+
+
+# Regime
+regime = ""
+if N > 0 and D > 0:
+    power = a_N / a_D
+    if D < N**power:
+        regime = "*Data-limited*"
+    else:
+        regime = "*Capacity-limited*"
+
+st.markdown(f"## Regime: {regime}")
+if N > 0 and C_min > 0:
+    st.markdown(f"Param count ($$" +  N_formatted + f"$$) is {'high' if N > N_opt else 'low'} relative to "+ "$$N_{opt}$$ of $$" + N_opt_formatted + "$$")
+if D > 0 and C_min > 0:
+    st.markdown(f"Token count ($$" + D_formatted + f"$$) is {'high' if D > D_opt else 'low'} relative to " + "$$D_{opt}$$ of $$" + D_opt_formatted + "$$")
+
