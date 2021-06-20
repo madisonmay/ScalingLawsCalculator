@@ -19,12 +19,12 @@ fmt = ScientificNotationFormatter()
 
 st.set_page_config(layout="wide")
 st.sidebar.markdown("## Variables")
-st.sidebar.markdown("Enter compute budget to find optimal param count and dataset size:")
+st.sidebar.markdown("Value of -1 indicates unspecified")
 C_min = st.sidebar.number_input(
     "Compute budget (PF-days)",
     min_value=-1.,
     step=1.,
-    format='%e',
+    format='%f',
     value=-1.,
 )
 N = st.sidebar.number_input(
@@ -64,7 +64,7 @@ D_c = st.sidebar.number_input("Dataset size (D)", value=5.4e13, format='%e')
 C_min_c = st.sidebar.number_input("Compute (C_min)", value=3.1e8, format='%e')
 
 st.markdown("## Compute Efficient Frontier")
-st.markdown("Specify your compute budget to determine optimal settings.")
+st.markdown("**Specify your compute budget to determine optimal settings.**")
 col0, col1, col2 = st.beta_columns(3)
 col1.markdown("**Formula**")
 col2.markdown("**Result**")
@@ -109,7 +109,6 @@ col2.markdown("$$" + D_opt_formatted + fmt.format(" = {:s} \cdot ", D_e) + C_for
 
 
 # Regime
-regime = ""
 if N > 0 and D > 0:
     power = a_N / a_D
     if D < N**power:
@@ -117,7 +116,11 @@ if N > 0 and D > 0:
     else:
         regime = "*Capacity-limited*"
 
-st.markdown(f"## Regime: {regime}")
+    st.markdown(f"## Regime: {regime}")
+else:
+    st.markdown(f"## Regime")
+    st.markdown(f"**Specify param count and dataset size to determine if you are data-limited or capacity-limited.**")
+
 if N > 0 and C_min > 0:
     st.markdown(f"Param count ($$" +  N_formatted + f"$$) is {'high' if N > N_opt else 'low'} relative to "+ "$$N_{opt}$$ of $$" + N_opt_formatted + "$$")
 if D > 0 and C_min > 0:
